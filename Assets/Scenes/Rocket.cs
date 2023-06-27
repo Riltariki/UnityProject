@@ -8,6 +8,10 @@ public class Rocket : MonoBehaviour
 
     Rigidbody rigidBody;
     AudioSource audioSource;
+
+    [SerializeField] float rcsThruset = 15f;
+    [SerializeField] float speedThrust = 30f;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -23,6 +27,22 @@ public class Rocket : MonoBehaviour
         ProcessSound();
     }
 
+
+    private void OnCollisionEnter(Collision collision)
+    {
+        switch (collision.gameObject.tag)
+        {
+            case "Friendly":
+                print("Fine");
+                    break;
+            case "Fuel":
+                print("Fueld");
+                break;
+            default:
+                print("Collided");
+                break;
+        }
+    }
     private void ProcessSound()
     {
         if (Input.GetKey(KeyCode.Space))
@@ -40,15 +60,17 @@ public class Rocket : MonoBehaviour
     private void Rotation()
     {
         rigidBody.freezeRotation = true;
+
         if (Input.GetKey(KeyCode.A))
         {
             print("Left rotating");
-            transform.Rotate(Vector3.forward);
+            float rotationSpeedFrame = rcsThruset * Time.deltaTime;
+            transform.Rotate(Vector3.forward * rotationSpeedFrame);
         }
         if (Input.GetKey(KeyCode.D))
         {
-            print("Right rotating");
-            transform.Rotate(-Vector3.forward);
+            float rotationSpeedFrame = rcsThruset * Time.deltaTime;
+            transform.Rotate(-Vector3.forward * rotationSpeedFrame);
         }
         rigidBody.freezeRotation = false;
     }
@@ -57,7 +79,8 @@ public class Rocket : MonoBehaviour
     {
         if (Input.GetKey(KeyCode.Space))
         {
-            rigidBody.AddRelativeForce(Vector3.up);
+            float thrustSpeedFrame = speedThrust * Time.deltaTime;
+            rigidBody.AddRelativeForce(Vector3.up * thrustSpeedFrame);
             print("Space pressed");
         }
     }

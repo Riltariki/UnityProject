@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class Rocket : MonoBehaviour
 {
@@ -11,6 +12,17 @@ public class Rocket : MonoBehaviour
 
     [SerializeField] float rcsThruset = 15f;
     [SerializeField] float speedThrust = 30f;
+    [SerializeField] AudioClip mainEngine;
+    [SerializeField] AudioClip deadEngine;
+    [SerializeField] AudioClip finishEngine;
+
+    [SerializeField] ParticleSystem effectFly;
+    [SerializeField] ParticleSystem effectSuccess;
+    [SerializeField] ParticleSystem effectDead;
+    int levelNow = 0;
+
+    enum State { Alive, Dying, Transcending }
+    State state = State.Alive;
 
     // Start is called before the first frame update
     void Start()
@@ -22,39 +34,78 @@ public class Rocket : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        Thrust();
-        Rotation();
-        ProcessSound();
+        if (state == State.Alive)
+        {
+            Thrust();
+            Rotation();
+            RocketEffects();
+        }
+
     }
 
 
     private void OnCollisionEnter(Collision collision)
     {
+        if (state != State.Alive)
+        {
+            return;
+        }
         switch (collision.gameObject.tag)
         {
             case "Friendly":
                 print("Fine");
                     break;
-            case "Fuel":
-                print("Fueld");
+            case "Finish":
+                StartSuccessSequence();
                 break;
             default:
-                print("Collided");
+                print("Dead");
+                StartDeathSequence();
                 break;
         }
     }
-    private void ProcessSound()
+
+    private void StartDeathSequence()
     {
-        if (Input.GetKey(KeyCode.Space))
+        audioSource.Stop();
+        state = State.Dying;
+        effectDead.Play();
+        audioSource.PlayOneShot(deadEngine);
+        Invoke("LoadNextScene", 2f);
+    }
+
+    private void StartSuccessSequence()
+    {
+        audioSource.Stop();
+        print(levelNow);
+        state = State.Transcending;
+        audioSource.PlayOneShot(finishEngine);
+        effectSuccess.Play();
+        Invoke("LoadNextScene", 2f);
+        levelNow++;
+    }
+
+    private void LoadNextScene()
+    {
+        SceneManager.LoadScene(levelNow);
+    }
+
+
+
+    private void RocketEffects()
+    {
+        if (Input.GetKey(KeyCode.Space) && state == State.Alive)
         {
             if (!audioSource.isPlaying)
             {
-                audioSource.Play();
+                audioSource.PlayOneShot(mainEngine);
             }
+            effectFly.Play();
         }
         else
         {
-            audioSource.Pause();
+            effectFly.Stop();
+            audioSource.Stop();
         }
     }
     private void Rotation()
